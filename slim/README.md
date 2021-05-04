@@ -154,7 +154,7 @@ is found below:
 import tensorflow as tf
 from datasets import flowers
 
-slim = tf.contrib.slim
+import tf_slim as slim
 
 # Selects the 'validation' dataset.
 dataset = flowers.get_split('validation', DATA_DIR)

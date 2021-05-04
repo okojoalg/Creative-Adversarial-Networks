@@ -24,7 +24,6 @@ import tensorflow as tf
 
 _PADDING = 4
 
-slim = tf.contrib.slim
 
 
 def preprocess_for_train(image,
@@ -48,21 +47,21 @@ def preprocess_for_train(image,
     A preprocessed image.
   """
   if add_image_summaries:
-    tf.summary.image('image', tf.expand_dims(image, 0))
+    tf.compat.v1.summary.image('image', tf.expand_dims(image, 0))
 
   # Transform the image to floats.
-  image = tf.to_float(image)
+  image = tf.cast(image, dtype=tf.float32)
   if padding > 0:
-    image = tf.pad(image, [[padding, padding], [padding, padding], [0, 0]])
+    image = tf.pad(tensor=image, paddings=[[padding, padding], [padding, padding], [0, 0]])
   # Randomly crop a [height, width] section of the image.
-  distorted_image = tf.random_crop(image,
+  distorted_image = tf.image.random_crop(image,
                                    [output_height, output_width, 3])
 
   # Randomly flip the image horizontally.
   distorted_image = tf.image.random_flip_left_right(distorted_image)
 
   if add_image_summaries:
-    tf.summary.image('distorted_image', tf.expand_dims(distorted_image, 0))
+    tf.compat.v1.summary.image('distorted_image', tf.expand_dims(distorted_image, 0))
 
   # Because these operations are not commutative, consider randomizing
   # the order their operation.
@@ -88,16 +87,16 @@ def preprocess_for_eval(image, output_height, output_width,
     A preprocessed image.
   """
   if add_image_summaries:
-    tf.summary.image('image', tf.expand_dims(image, 0))
+    tf.compat.v1.summary.image('image', tf.expand_dims(image, 0))
   # Transform the image to floats.
-  image = tf.to_float(image)
+  image = tf.cast(image, dtype=tf.float32)
 
   # Resize and crop if needed.
-  resized_image = tf.image.resize_image_with_crop_or_pad(image,
+  resized_image = tf.image.resize_with_crop_or_pad(image,
                                                          output_width,
                                                          output_height)
   if add_image_summaries:
-    tf.summary.image('resized_image', tf.expand_dims(resized_image, 0))
+    tf.compat.v1.summary.image('resized_image', tf.expand_dims(resized_image, 0))
 
   # Subtract off the mean and divide by the variance of the pixels.
   return tf.image.per_image_standardization(resized_image)

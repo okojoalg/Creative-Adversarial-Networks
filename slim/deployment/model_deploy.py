@@ -103,7 +103,7 @@ import collections
 
 import tensorflow as tf
 
-slim = tf.contrib.slim
+import tf_slim as slim
 
 
 __all__ = ['create_clones',
@@ -185,10 +185,10 @@ def create_clones(config, model_fn, args=None, kwargs=None):
                       device=config.variables_device()):
     # Create clones.
     for i in range(0, config.num_clones):
-      with tf.name_scope(config.clone_scope(i)) as clone_scope:
+      with tf.compat.v1.name_scope(config.clone_scope(i)) as clone_scope:
         clone_device = config.clone_device(i)
         with tf.device(clone_device):
-          with tf.variable_scope(tf.get_variable_scope(),
+          with tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(),
                                  reuse=True if i > 0 else None):
             outputs = model_fn(*args, **kwargs)
           clones.append(Clone(outputs, clone_scope, clone_device))
@@ -215,11 +215,11 @@ def _gather_clone_loss(clone, num_clones, regularization_losses):
   # Compute and aggregate losses on the clone device.
   with tf.device(clone.device):
     all_losses = []
-    clone_losses = tf.get_collection(tf.GraphKeys.LOSSES, clone.scope)
+    clone_losses = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.LOSSES, clone.scope)
     if clone_losses:
       clone_loss = tf.add_n(clone_losses, name='clone_loss')
       if num_clones > 1:
-        clone_loss = tf.div(clone_loss, 1.0 * num_clones,
+        clone_loss = tf.compat.v1.div(clone_loss, 1.0 * num_clones,
                             name='scaled_clone_loss')
       all_losses.append(clone_loss)
     if regularization_losses:
@@ -230,9 +230,9 @@ def _gather_clone_loss(clone, num_clones, regularization_losses):
       sum_loss = tf.add_n(all_losses)
   # Add the summaries out of the clone device block.
   if clone_loss is not None:
-    tf.summary.scalar(clone.scope + '/clone_loss', clone_loss)
+    tf.compat.v1.summary.scalar(clone.scope + '/clone_loss', clone_loss)
   if regularization_loss is not None:
-    tf.summary.scalar('regularization_loss', regularization_loss)
+    tf.compat.v1.summary.scalar('regularization_loss', regularization_loss)
   return sum_loss
 
 
@@ -289,10 +289,10 @@ def optimize_clones(clones, optimizer,
   clones_losses = []
   num_clones = len(clones)
   if regularization_losses is None:
-    regularization_losses = tf.get_collection(
-        tf.GraphKeys.REGULARIZATION_LOSSES)
+    regularization_losses = tf.compat.v1.get_collection(
+        tf.compat.v1.GraphKeys.REGULARIZATION_LOSSES)
   for clone in clones:
-    with tf.name_scope(clone.scope):
+    with tf.compat.v1.name_scope(clone.scope):
       clone_loss, clone_grad = _optimize_clone(
           optimizer, clone, num_clones, regularization_losses, **kwargs)
       if clone_loss is not None:
@@ -344,7 +344,7 @@ def deploy(config,
 
   """
   # Gather initial summaries.
-  summaries = set(tf.get_collection(tf.GraphKeys.SUMMARIES))
+  summaries = set(tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.SUMMARIES))
 
   # Create Clones.
   clones = create_clones(config, model_fn, args, kwargs)
@@ -352,7 +352,7 @@ def deploy(config,
 
   # Gather update_ops from the first clone. These contain, for example,
   # the updates for the batch_norm variables created by model_fn.
-  update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, first_clone.scope)
+  update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS, first_clone.scope)
 
   train_op = None
   total_loss = None
@@ -380,10 +380,10 @@ def deploy(config,
           train_op = tf.identity(total_loss, name='train_op')
     else:
       clones_losses = []
-      regularization_losses = tf.get_collection(
-          tf.GraphKeys.REGULARIZATION_LOSSES)
+      regularization_losses = tf.compat.v1.get_collection(
+          tf.compat.v1.GraphKeys.REGULARIZATION_LOSSES)
       for clone in clones:
-        with tf.name_scope(clone.scope):
+        with tf.compat.v1.name_scope(clone.scope):
           clone_loss = _gather_clone_loss(clone, len(clones),
                                           regularization_losses)
           if clone_loss is not None:
@@ -395,16 +395,16 @@ def deploy(config,
 
     # Add the summaries from the first clone. These contain the summaries
     # created by model_fn and either optimize_clones() or _gather_clone_loss().
-    summaries |= set(tf.get_collection(tf.GraphKeys.SUMMARIES,
+    summaries |= set(tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.SUMMARIES,
                                        first_clone.scope))
 
     if total_loss is not None:
       # Add total_loss to summary.
-      summaries.add(tf.summary.scalar('total_loss', total_loss))
+      summaries.add(tf.compat.v1.summary.scalar('total_loss', total_loss))
 
     if summaries:
       # Merge all summaries together.
-      summary_op = tf.summary.merge(list(summaries), name='summary_op')
+      summary_op = tf.compat.v1.summary.merge(list(summaries), name='summary_op')
     else:
       summary_op = None
 
@@ -462,12 +462,12 @@ def _add_gradients_summaries(grads_and_vars):
         grad_values = grad.values
       else:
         grad_values = grad
-      summaries.append(tf.summary.histogram(var.op.name + ':gradient',
+      summaries.append(tf.compat.v1.summary.histogram(var.op.name + ':gradient',
                                             grad_values))
-      summaries.append(tf.summary.histogram(var.op.name + ':gradient_norm',
-                                            tf.global_norm([grad_values])))
+      summaries.append(tf.compat.v1.summary.histogram(var.op.name + ':gradient_norm',
+                                            tf.linalg.global_norm([grad_values])))
     else:
-      tf.logging.info('Var %s has no gradient', var.op.name)
+      tf.compat.v1.logging.info('Var %s has no gradient', var.op.name)
   return summaries
 
 
@@ -659,7 +659,7 @@ class DeploymentConfig(object):
       def choose(self, op):
         if op.device:
           return op.device
-        node_def = op if isinstance(op, tf.NodeDef) else op.node_def
+        node_def = op if isinstance(op, tf.compat.v1.NodeDef) else op.node_def
         if node_def.op.startswith('Variable'):
           t = self._task
           self._task = (self._task + 1) % self._tasks

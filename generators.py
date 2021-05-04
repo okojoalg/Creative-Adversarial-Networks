@@ -3,7 +3,7 @@ import tensorflow as tf
 from ops import * 
 
 def vanilla_can(model, z, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -44,7 +44,7 @@ def vanilla_can(model, z, is_sampler=False):
         return tf.nn.tanh(h6)
 
 def wgan_cond(model, z, y, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -88,7 +88,7 @@ def wgan_cond(model, z, y, is_sampler=False):
         return tf.nn.tanh(h6)
 
 def vanilla_wgan(model, z, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -124,7 +124,7 @@ def vanilla_wgan(model, z, is_sampler=False):
 
 
 def can_slim(model, z, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -158,7 +158,7 @@ def can_slim(model, z, is_sampler=False):
         return tf.nn.tanh(h4)
 
 def wgan_slim_cond(model, z, y, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -189,7 +189,7 @@ def wgan_slim_cond(model, z, y, is_sampler=False):
 
 
 def wgan_slim(model, z, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width #256/256
@@ -218,7 +218,7 @@ def wgan_slim(model, z, is_sampler=False):
         return tf.nn.tanh(h4)
 
 def dcgan(model, z, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width
@@ -240,7 +240,7 @@ def dcgan(model, z, is_sampler=False):
         return tf.nn.tanh(h4)
 
 def dcgan_cond(model, z, y, is_sampler=False):
-    with tf.variable_scope("generator") as scope:
+    with tf.compat.v1.variable_scope("generator") as scope:
         if is_sampler:
             scope.reuse_variables()
         s_h, s_w = model.output_height, model.output_width

@@ -24,8 +24,9 @@ import tensorflow as tf
 
 from nets.nasnet import nasnet_utils
 
-arg_scope = tf.contrib.framework.arg_scope
-slim = tf.contrib.slim
+import tf_slim as slim
+# unsolved HParams
+arg_scope = slim.arg_scope
 
 
 # Notes for training NASNet Cifar Model
@@ -37,7 +38,7 @@ slim = tf.contrib.slim
 # clip global norm of all gradients by 5
 def _cifar_config(is_training=True):
   drop_path_keep_prob = 1.0 if not is_training else 0.6
-  return tf.contrib.training.HParams(
+  return HParams(
       stem_multiplier=3.0,
       drop_path_keep_prob=drop_path_keep_prob,
       num_cells=18,
@@ -67,7 +68,7 @@ def _cifar_config(is_training=True):
 # clip global norm of all gradients by 10
 def _large_imagenet_config(is_training=True):
   drop_path_keep_prob = 1.0 if not is_training else 0.7
-  return tf.contrib.training.HParams(
+  return HParams(
       stem_multiplier=3.0,
       dense_dropout_keep_prob=0.5,
       num_cells=18,
@@ -93,7 +94,7 @@ def _large_imagenet_config(is_training=True):
 # label smoothing: 0.1
 # clip global norm of all gradients by 10
 def _mobile_imagenet_config():
-  return tf.contrib.training.HParams(
+  return HParams(
       stem_multiplier=1.0,
       dense_dropout_keep_prob=0.5,
       num_cells=12,
@@ -130,9 +131,9 @@ def nasnet_cifar_arg_scope(weight_decay=5e-4,
       'scale': True,
       'fused': True,
   }
-  weights_regularizer = tf.contrib.layers.l2_regularizer(weight_decay)
-  weights_initializer = tf.contrib.layers.variance_scaling_initializer(
-      mode='FAN_OUT')
+  weights_regularizer = tf.keras.regularizers.l2(0.5 * (weight_decay))
+  weights_initializer = tf.compat.v1.keras.initializers.VarianceScaling(
+      scale=2.0, mode=('FAN_OUT').lower())
   with arg_scope([slim.fully_connected, slim.conv2d, slim.separable_conv2d],
                  weights_regularizer=weights_regularizer,
                  weights_initializer=weights_initializer):
@@ -166,9 +167,9 @@ def nasnet_mobile_arg_scope(weight_decay=4e-5,
       'scale': True,
       'fused': True,
   }
-  weights_regularizer = tf.contrib.layers.l2_regularizer(weight_decay)
-  weights_initializer = tf.contrib.layers.variance_scaling_initializer(
-      mode='FAN_OUT')
+  weights_regularizer = tf.keras.regularizers.l2(0.5 * (weight_decay))
+  weights_initializer = tf.compat.v1.keras.initializers.VarianceScaling(
+      scale=2.0, mode=('FAN_OUT').lower())
   with arg_scope([slim.fully_connected, slim.conv2d, slim.separable_conv2d],
                  weights_regularizer=weights_regularizer,
                  weights_initializer=weights_initializer):
@@ -202,9 +203,9 @@ def nasnet_large_arg_scope(weight_decay=5e-5,
       'scale': True,
       'fused': True,
   }
-  weights_regularizer = tf.contrib.layers.l2_regularizer(weight_decay)
-  weights_initializer = tf.contrib.layers.variance_scaling_initializer(
-      mode='FAN_OUT')
+  weights_regularizer = tf.keras.regularizers.l2(0.5 * (weight_decay))
+  weights_initializer = tf.compat.v1.keras.initializers.VarianceScaling(
+      scale=2.0, mode=('FAN_OUT').lower())
   with arg_scope([slim.fully_connected, slim.conv2d, slim.separable_conv2d],
                  weights_regularizer=weights_regularizer,
                  weights_initializer=weights_initializer):
@@ -218,9 +219,9 @@ def nasnet_large_arg_scope(weight_decay=5e-5,
 
 def _build_aux_head(net, end_points, num_classes, hparams, scope):
   """Auxiliary head used for all models across all datasets."""
-  with tf.variable_scope(scope):
+  with tf.compat.v1.variable_scope(scope):
     aux_logits = tf.identity(net)
-    with tf.variable_scope('aux_logits'):
+    with tf.compat.v1.variable_scope('aux_logits'):
       aux_logits = slim.avg_pool2d(
           aux_logits, [5, 5], stride=3, padding='VALID')
       aux_logits = slim.conv2d(aux_logits, 128, [1, 1], scope='proj')
@@ -235,7 +236,7 @@ def _build_aux_head(net, end_points, num_classes, hparams, scope):
       aux_logits = slim.conv2d(aux_logits, 768, shape, padding='VALID')
       aux_logits = slim.batch_norm(aux_logits, scope='aux_bn1')
       aux_logits = tf.nn.relu(aux_logits)
-      aux_logits = tf.contrib.layers.flatten(aux_logits)
+      aux_logits = slim.flatten(aux_logits)
       aux_logits = slim.fully_connected(aux_logits, num_classes)
       end_points['AuxLogits'] = aux_logits
 
@@ -285,11 +286,11 @@ def build_nasnet_cifar(
   hparams = _cifar_config(is_training=is_training)
 
   if tf.test.is_gpu_available() and hparams.data_format == 'NHWC':
-    tf.logging.info('A GPU is available on the machine, consider using NCHW '
+    tf.compat.v1.logging.info('A GPU is available on the machine, consider using NCHW '
                     'data format for increased speed on GPU.')
 
   if hparams.data_format == 'NCHW':
-    images = tf.transpose(images, [0, 3, 1, 2])
+    images = tf.transpose(a=images, perm=[0, 3, 1, 2])
 
   # Calculate the total number of cells in the network
   # Add 2 for the reduction cells
@@ -330,11 +331,11 @@ def build_nasnet_mobile(images, num_classes,
   hparams = _mobile_imagenet_config()
 
   if tf.test.is_gpu_available() and hparams.data_format == 'NHWC':
-    tf.logging.info('A GPU is available on the machine, consider using NCHW '
+    tf.compat.v1.logging.info('A GPU is available on the machine, consider using NCHW '
                     'data format for increased speed on GPU.')
 
   if hparams.data_format == 'NCHW':
-    images = tf.transpose(images, [0, 3, 1, 2])
+    images = tf.transpose(a=images, perm=[0, 3, 1, 2])
 
   # Calculate the total number of cells in the network
   # Add 2 for the reduction cells
@@ -378,11 +379,11 @@ def build_nasnet_large(images, num_classes,
   hparams = _large_imagenet_config(is_training=is_training)
 
   if tf.test.is_gpu_available() and hparams.data_format == 'NHWC':
-    tf.logging.info('A GPU is available on the machine, consider using NCHW '
+    tf.compat.v1.logging.info('A GPU is available on the machine, consider using NCHW '
                     'data format for increased speed on GPU.')
 
   if hparams.data_format == 'NCHW':
-    images = tf.transpose(images, [0, 3, 1, 2])
+    images = tf.transpose(a=images, perm=[0, 3, 1, 2])
 
   # Calculate the total number of cells in the network
   # Add 2 for the reduction cells
@@ -496,7 +497,7 @@ def _build_nasnet_base(images,
     cell_outputs.append(net)
 
   # Final softmax layer
-  with tf.variable_scope('final_layer'):
+  with tf.compat.v1.variable_scope('final_layer'):
     net = tf.nn.relu(net)
     net = nasnet_utils.global_avg_pool(net)
     if add_and_check_endpoint('global_pool', net) or num_classes is None:

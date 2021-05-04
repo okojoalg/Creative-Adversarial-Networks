@@ -41,18 +41,18 @@ from datasets import download_and_convert_flowers
 from datasets import download_and_convert_mnist
 from datasets import convert_wikiart
 
-FLAGS = tf.app.flags.FLAGS
+FLAGS = tf.compat.v1.flags.FLAGS
 
-tf.app.flags.DEFINE_string(
+tf.compat.v1.flags.DEFINE_string(
     'dataset_name',
     None,
     'The name of the dataset to convert, one of "cifar10", "flowers", "mnist".')
 
-tf.app.flags.DEFINE_string(
+tf.compat.v1.flags.DEFINE_string(
     'dataset_dir',
     None,
     'The directory where the output TFRecords and temporary files are saved.')
-tf.app.flags.DEFINE_string(
+tf.compat.v1.flags.DEFINE_string(
     'input_dataset_dir',
     None,
     'The input directory where the images are stored')
@@ -81,4 +81,4 @@ def main(_):
         'dataset_name [%s] was not recognized.' % FLAGS.dataset_name)
 
 if __name__ == '__main__':
-  tf.app.run()
+  tf.compat.v1.app.run()

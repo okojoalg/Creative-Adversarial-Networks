@@ -20,7 +20,7 @@ from __future__ import print_function
 from math import log
 
 import tensorflow as tf
-slim = tf.contrib.slim
+import tf_slim as slim
 
 
 def _validate_image_inputs(inputs):
@@ -79,7 +79,7 @@ def discriminator(inputs,
   inp_shape = inputs.get_shape().as_list()[1]
 
   end_points = {}
-  with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
+  with tf.compat.v1.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
     with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
       with slim.arg_scope([slim.conv2d],
                           stride=2,
@@ -153,7 +153,7 @@ def generator(inputs,
 
   end_points = {}
   num_layers = int(log(final_size, 2)) - 1
-  with tf.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
+  with tf.compat.v1.variable_scope(scope, values=[inputs], reuse=reuse) as scope:
     with slim.arg_scope([normalizer_fn], **normalizer_fn_args):
       with slim.arg_scope([slim.conv2d_transpose],
                           normalizer_fn=normalizer_fn,

@@ -128,7 +128,7 @@ class DCGAN(object):
           num_classes=27,
           is_training=False)
       if images.shape[1:3] != (256, 256):
-        images = tf.image.resize_images(images, [256, 256])
+        images = tf.image.resize(images, [256, 256])
       logits, _ = network_fn(images)
       logits = tf.stop_gradient(logits)
       return logits
@@ -138,7 +138,7 @@ class DCGAN(object):
 
   def build_model(self, old_model=False):
     if self.y_dim:
-      self.y = tf.placeholder(tf.float32, [None, self.y_dim], name='y')
+      self.y = tf.compat.v1.placeholder(tf.float32, [None, self.y_dim], name='y')
     else:
       self.y = None
 
@@ -147,9 +147,9 @@ class DCGAN(object):
     else:
       image_dims = [self.input_height, self.input_width, self.c_dim]
 
-    self.inputs = tf.placeholder(
+    self.inputs = tf.compat.v1.placeholder(
       tf.float32, [None] + image_dims, name='real_images')
-    self.z = tf.placeholder(
+    self.z = tf.compat.v1.placeholder(
       tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
@@ -176,22 +176,22 @@ class DCGAN(object):
     else:
         self.sampler            = self.generator(self, self.z, self.y, is_sampler=True)
 
-    t_vars = tf.trainable_variables()
+    t_vars = tf.compat.v1.trainable_variables()
     self.d_vars = [var for var in t_vars if 'd_' in var.name]
     self.g_vars = [var for var in t_vars if 'g_' in var.name]
     if self.style_net_checkpoint:
-      all_vars = tf.trainable_variables()
+      all_vars = tf.compat.v1.trainable_variables()
       style_net_vars = [v for v in all_vars if 'InceptionResnetV2' in v.name]
       other_vars = [v for v in all_vars if 'InceptionResnetV2' not in v.name]
-      self.saver = tf.train.Saver(var_list=other_vars)
-      self.style_net_saver = tf.train.Saver(var_list=style_net_vars)
+      self.saver = tf.compat.v1.train.Saver(var_list=other_vars)
+      self.style_net_saver = tf.compat.v1.train.Saver(var_list=style_net_vars)
     else:
-      self.saver=tf.train.Saver()
+      self.saver=tf.compat.v1.train.Saver()
   def train(self, config):
     try:
-      tf.global_variables_initializer().run()
+      tf.compat.v1.global_variables_initializer().run()
     except:
-      tf.initialize_all_variables().run()
+      tf.compat.v1.initialize_all_variables().run()
 
 
     self.log_dir = config.log_dir

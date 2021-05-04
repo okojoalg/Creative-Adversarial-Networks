@@ -23,11 +23,10 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+
 import tensorflow as tf
-
+import tf_slim as slim
 from datasets import dataset_utils
-
-slim = tf.contrib.slim
 
 _FILE_PATTERN = 'cifar10_%s.tfrecord'
 
@@ -67,12 +66,12 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
 
   # Allowing None in the signature so that dataset_factory can use the default.
   if not reader:
-    reader = tf.TFRecordReader
+    reader = tf.compat.v1.TFRecordReader
 
   keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='png'),
-      'image/class/label': tf.FixedLenFeature(
+      'image/encoded': tf.io.FixedLenFeature((), tf.string, default_value=''),
+      'image/format': tf.io.FixedLenFeature((), tf.string, default_value='png'),
+      'image/class/label': tf.io.FixedLenFeature(
           [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
   }
 

@@ -27,7 +27,7 @@ import tensorflow as tf
 
 from datasets import dataset_utils
 
-slim = tf.contrib.slim
+import tf_slim as slim
 
 _FILE_PATTERN = 'wikiart_%s_*.tfrecord'
 
@@ -67,12 +67,12 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
 
   # Allowing None in the signature so that dataset_factory can use the default.
   if reader is None:
-    reader = tf.TFRecordReader
+    reader = tf.compat.v1.TFRecordReader
 
   keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='jpg'),
-      'image/class/label': tf.FixedLenFeature(
+      'image/encoded': tf.io.FixedLenFeature((), tf.string, default_value=''),
+      'image/format': tf.io.FixedLenFeature((), tf.string, default_value='jpg'),
+      'image/class/label': tf.io.FixedLenFeature(
           [], tf.int64, default_value=tf.zeros([], dtype=tf.int64)),
   }
 

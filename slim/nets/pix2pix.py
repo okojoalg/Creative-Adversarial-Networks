@@ -33,8 +33,8 @@ import collections
 import functools
 
 import tensorflow as tf
+import tf_slim as slim
 
-layers = tf.contrib.layers
 
 
 def pix2pix_arg_scope():
@@ -52,11 +52,11 @@ def pix2pix_arg_scope():
       'epsilon': 0.00001,
   }
 
-  with tf.contrib.framework.arg_scope(
-      [layers.conv2d, layers.conv2d_transpose],
-      normalizer_fn=layers.instance_norm,
+  with slim.arg_scope(
+      [slim.conv2d, slim.conv2d_transpose],
+      normalizer_fn=slim.instance_norm,
       normalizer_params=instance_norm_params,
-      weights_initializer=tf.random_normal_initializer(0, 0.02)) as sc:
+      weights_initializer=tf.compat.v1.random_normal_initializer(0, 0.02)) as sc:
     return sc
 
 
@@ -78,16 +78,16 @@ def upsample(net, num_outputs, kernel_size, method='nn_upsample_conv'):
   Raises:
     ValueError: if `method` is not recognized.
   """
-  net_shape = tf.shape(net)
+  net_shape = tf.shape(input=net)
   height = net_shape[1]
   width = net_shape[2]
 
   if method == 'nn_upsample_conv':
-    net = tf.image.resize_nearest_neighbor(
-        net, [kernel_size[0] * height, kernel_size[1] * width])
-    net = layers.conv2d(net, num_outputs, [4, 4], activation_fn=None)
+    net = tf.image.resize(
+        net, [kernel_size[0] * height, kernel_size[1] * width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    net = slim.conv2d(net, num_outputs, [4, 4], activation_fn=None)
   elif method == 'conv2d_transpose':
-    net = layers.conv2d_transpose(
+    net = slim.conv2d_transpose(
         net, num_outputs, [4, 4], stride=kernel_size, activation_fn=None)
   else:
     raise ValueError('Unknown method: [%s]', method)
@@ -167,9 +167,9 @@ def pix2pix_generator(net,
   ###########
   # Encoder #
   ###########
-  with tf.variable_scope('encoder'):
-    with tf.contrib.framework.arg_scope(
-        [layers.conv2d],
+  with tf.compat.v1.variable_scope('encoder'):
+    with slim.arg_scope(
+        [slim.conv2d],
         kernel_size=[4, 4],
         stride=2,
         activation_fn=tf.nn.leaky_relu):
@@ -179,12 +179,12 @@ def pix2pix_generator(net,
         # Section 5.1.1
         if block_id == 0:
           # First layer doesn't use normalizer_fn
-          net = layers.conv2d(net, block.num_filters, normalizer_fn=None)
+          net = slim.conv2d(net, block.num_filters, normalizer_fn=None)
         elif block_id < len(blocks) - 1:
-          net = layers.conv2d(net, block.num_filters)
+          net = slim.conv2d(net, block.num_filters)
         else:
           # Last layer doesn't use activation_fn nor normalizer_fn
-          net = layers.conv2d(
+          net = slim.conv2d(
               net, block.num_filters, activation_fn=None, normalizer_fn=None)
 
         encoder_activations.append(net)
@@ -196,10 +196,10 @@ def pix2pix_generator(net,
   reversed_blocks = list(blocks)
   reversed_blocks.reverse()
 
-  with tf.variable_scope('decoder'):
+  with tf.compat.v1.variable_scope('decoder'):
     # Dropout is used at both train and test time as per 'Image-to-Image',
     # Section 2.1 (last paragraph).
-    with tf.contrib.framework.arg_scope([layers.dropout], is_training=True):
+    with slim.arg_scope([slim.dropout], is_training=True):
 
       for block_id, block in enumerate(reversed_blocks):
         if block_id > 0:
@@ -209,11 +209,11 @@ def pix2pix_generator(net,
         net = tf.nn.relu(net)
         net = upsample_fn(net, block.num_filters, [2, 2])
         if block.decoder_keep_prob > 0:
-          net = layers.dropout(net, keep_prob=block.decoder_keep_prob)
+          net = slim.dropout(net, keep_prob=block.decoder_keep_prob)
         end_points['decoder%d' % block_id] = net
 
-  with tf.variable_scope('output'):
-    logits = layers.conv2d(net, num_outputs, [4, 4], activation_fn=None)
+  with tf.compat.v1.variable_scope('output'):
+    logits = slim.conv2d(net, num_outputs, [4, 4], activation_fn=None)
     logits = tf.reshape(logits, input_size)
 
     end_points['logits'] = logits
@@ -245,34 +245,34 @@ def pix2pix_discriminator(net, num_filters, padding=2, is_training=False):
 
   def padded(net, scope):
     if padding:
-      with tf.variable_scope(scope):
+      with tf.compat.v1.variable_scope(scope):
         spatial_pad = tf.constant(
             [[0, 0], [padding, padding], [padding, padding], [0, 0]],
             dtype=tf.int32)
-        return tf.pad(net, spatial_pad, 'REFLECT')
+        return tf.pad(tensor=net, paddings=spatial_pad, mode='REFLECT')
     else:
       return net
 
-  with tf.contrib.framework.arg_scope(
-      [layers.conv2d],
+  with slim.arg_scope(
+      [slim.conv2d],
       kernel_size=[4, 4],
       stride=2,
       padding='valid',
       activation_fn=tf.nn.leaky_relu):
 
     # No normalization on the input layer.
-    net = layers.conv2d(
+    net = slim.conv2d(
         padded(net, 'conv0'), num_filters[0], normalizer_fn=None, scope='conv0')
 
     end_points['conv0'] = net
 
     for i in range(1, num_layers - 1):
-      net = layers.conv2d(
+      net = slim.conv2d(
           padded(net, 'conv%d' % i), num_filters[i], scope='conv%d' % i)
       end_points['conv%d' % i] = net
 
     # Stride 1 on the last layer.
-    net = layers.conv2d(
+    net = slim.conv2d(
         padded(net, 'conv%d' % (num_layers - 1)),
         num_filters[-1],
         stride=1,
@@ -280,7 +280,7 @@ def pix2pix_discriminator(net, num_filters, padding=2, is_training=False):
     end_points['conv%d' % (num_layers - 1)] = net
 
     # 1-dim logits, stride 1, no activation, no normalization.
-    logits = layers.conv2d(
+    logits = slim.conv2d(
         padded(net, 'conv%d' % num_layers),
         1,
         stride=1,

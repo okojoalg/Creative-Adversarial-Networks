@@ -72,7 +72,7 @@ def _add_to_tfrecord(filename, tfrecord_writer, offset=0):
   Returns:
     The new offset.
   """
-  with tf.gfile.Open(filename, 'rb') as f:
+  with tf.io.gfile.GFile(filename, 'rb') as f:
     if sys.version_info < (3,):
       data = cPickle.load(f)
     else:
@@ -85,10 +85,10 @@ def _add_to_tfrecord(filename, tfrecord_writer, offset=0):
   labels = data[b'labels']
 
   with tf.Graph().as_default():
-    image_placeholder = tf.placeholder(dtype=tf.uint8)
+    image_placeholder = tf.compat.v1.placeholder(dtype=tf.uint8)
     encoded_image = tf.image.encode_png(image_placeholder)
 
-    with tf.Session('') as sess:
+    with tf.compat.v1.Session('') as sess:
 
       for j in range(num_images):
         sys.stdout.write('\r>> Reading file [%s] image %d/%d' % (
@@ -150,10 +150,10 @@ def _clean_up_temporary_files(dataset_dir):
   """
   filename = _DATA_URL.split('/')[-1]
   filepath = os.path.join(dataset_dir, filename)
-  tf.gfile.Remove(filepath)
+  tf.io.gfile.remove(filepath)
 
   tmp_dir = os.path.join(dataset_dir, 'cifar-10-batches-py')
-  tf.gfile.DeleteRecursively(tmp_dir)
+  tf.io.gfile.rmtree(tmp_dir)
 
 
 def run(dataset_dir):
@@ -162,20 +162,20 @@ def run(dataset_dir):
   Args:
     dataset_dir: The dataset directory where the dataset is stored.
   """
-  if not tf.gfile.Exists(dataset_dir):
-    tf.gfile.MakeDirs(dataset_dir)
+  if not tf.io.gfile.exists(dataset_dir):
+    tf.io.gfile.makedirs(dataset_dir)
 
   training_filename = _get_output_filename(dataset_dir, 'train')
   testing_filename = _get_output_filename(dataset_dir, 'test')
 
-  if tf.gfile.Exists(training_filename) and tf.gfile.Exists(testing_filename):
+  if tf.io.gfile.exists(training_filename) and tf.io.gfile.exists(testing_filename):
     print('Dataset files already exist. Exiting without re-creating them.')
     return
 
   dataset_utils.download_and_uncompress_tarball(_DATA_URL, dataset_dir)
 
   # First, process the training data:
-  with tf.python_io.TFRecordWriter(training_filename) as tfrecord_writer:
+  with tf.io.TFRecordWriter(training_filename) as tfrecord_writer:
     offset = 0
     for i in range(_NUM_TRAIN_FILES):
       filename = os.path.join(dataset_dir,
@@ -184,7 +184,7 @@ def run(dataset_dir):
       offset = _add_to_tfrecord(filename, tfrecord_writer, offset)
 
   # Next, process the testing data:
-  with tf.python_io.TFRecordWriter(testing_filename) as tfrecord_writer:
+  with tf.io.TFRecordWriter(testing_filename) as tfrecord_writer:
     filename = os.path.join(dataset_dir,
                             'cifar-10-batches-py',
                             'test_batch')

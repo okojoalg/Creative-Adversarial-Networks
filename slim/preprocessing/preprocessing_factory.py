@@ -25,7 +25,6 @@ from preprocessing import inception_preprocessing
 from preprocessing import lenet_preprocessing
 from preprocessing import vgg_preprocessing
 
-slim = tf.contrib.slim
 
 
 def get_preprocessing(name, is_training=False):

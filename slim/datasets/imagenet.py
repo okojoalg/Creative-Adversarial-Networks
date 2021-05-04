@@ -38,7 +38,7 @@ import tensorflow as tf
 
 from datasets import dataset_utils
 
-slim = tf.contrib.slim
+import tf_slim as slim
 
 # TODO(nsilberman): Add tfrecord file type once the script is updated.
 _FILE_PATTERN = '%s-*'
@@ -141,26 +141,26 @@ def get_split(split_name, dataset_dir, file_pattern=None, reader=None):
 
   # Allowing None in the signature so that dataset_factory can use the default.
   if reader is None:
-    reader = tf.TFRecordReader
+    reader = tf.compat.v1.TFRecordReader
 
   keys_to_features = {
-      'image/encoded': tf.FixedLenFeature(
+      'image/encoded': tf.io.FixedLenFeature(
           (), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature(
+      'image/format': tf.io.FixedLenFeature(
           (), tf.string, default_value='jpeg'),
-      'image/class/label': tf.FixedLenFeature(
+      'image/class/label': tf.io.FixedLenFeature(
           [], dtype=tf.int64, default_value=-1),
-      'image/class/text': tf.FixedLenFeature(
+      'image/class/text': tf.io.FixedLenFeature(
           [], dtype=tf.string, default_value=''),
-      'image/object/bbox/xmin': tf.VarLenFeature(
+      'image/object/bbox/xmin': tf.io.VarLenFeature(
           dtype=tf.float32),
-      'image/object/bbox/ymin': tf.VarLenFeature(
+      'image/object/bbox/ymin': tf.io.VarLenFeature(
           dtype=tf.float32),
-      'image/object/bbox/xmax': tf.VarLenFeature(
+      'image/object/bbox/xmax': tf.io.VarLenFeature(
           dtype=tf.float32),
-      'image/object/bbox/ymax': tf.VarLenFeature(
+      'image/object/bbox/ymax': tf.io.VarLenFeature(
           dtype=tf.float32),
-      'image/object/class/label': tf.VarLenFeature(
+      'image/object/class/label': tf.io.VarLenFeature(
           dtype=tf.int64),
   }
 

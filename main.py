@@ -7,14 +7,15 @@ from model import DCGAN
 from utils import pp, visualize, show_all_variables
 
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
-flags = tf.app.flags
+flags = tf.compat.v1.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0.0002, "Learning rate  for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_float("smoothing", 0.9, "Smoothing term for discriminator real (class) loss [0.9]")
 flags.DEFINE_float("lambda_val", 1.0, "determines the relative importance of style ambiguity loss [1.0]")
-flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
+flags.DEFINE_float("train_size", np.inf, "The size of train images [np.inf]")
 flags.DEFINE_integer("save_itr", 500, "The number of iterations to run for saving checkpoints")
 flags.DEFINE_integer("sample_itr", 500, "The number of iterations to run for sampling from the sampler")
 flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
@@ -25,7 +26,7 @@ flags.DEFINE_integer("output_height", 64, "The size of the output images to prod
 flags.DEFINE_integer("output_width", None, "The size of the output images to produce. If None, same value as output_height [None]")
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("input_fname_pattern", "*.jpg", "Glob pattern of filename of input images [*]")
-flags.DEFINE_string("log_dir", 'logs', "Directory to store logs [logs]")
+# flags.DEFINE_string("log_dir", 'logs', "Directory to store logs [logs]")
 flags.DEFINE_string("checkpoint_dir", None, "Directory name to save the checkpoints [<FLAGS.log_dir>/checkpoint]")
 flags.DEFINE_string("sample_dir", None, "Directory name to save the image samples [<FLAGS.log_dir>/samples]")
 flags.DEFINE_string("load_dir", None, "Directory that specifies checkpoint to load")
@@ -133,9 +134,9 @@ def main(_):
       can=FLAGS.can)
 
 
-  run_config = tf.ConfigProto()
+  run_config = tf.compat.v1.ConfigProto()
   run_config.gpu_options.allow_growth=FLAGS.allow_gpu_growth
-  with tf.Session(config=run_config) as sess:
+  with tf.compat.v1.Session(config=run_config) as sess:
     dcgan.set_sess(sess)
     # show_all_variables()
 
@@ -149,4 +150,4 @@ def main(_):
     visualize(sess, dcgan, FLAGS, OPTION)
 
 if __name__ == '__main__':
-  tf.app.run()
+  tf.compat.v1.app.run()

@@ -4,7 +4,7 @@ from ops import conv_cond_concat
 from ops import *
 
 def vanilla_can(model, image, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         
@@ -28,7 +28,7 @@ def vanilla_can(model, image, reuse=False):
 
 def wgan_cond(model, image, y, reuse=False):
             #no batchnorm for WGAN GP
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         
@@ -55,7 +55,7 @@ def wgan_cond(model, image, y, reuse=False):
 
 def vanilla_wgan(model, image, reuse=False):
 
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         
@@ -75,7 +75,7 @@ def vanilla_wgan(model, image, reuse=False):
 
 
 def can_slim(model, image, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         h0 = lrelu(model.d_bn0(conv2d(image, model.df_dim, k_h=4, k_w=4, name='d_h0_conv',padding='VALID')))
@@ -93,7 +93,7 @@ def can_slim(model, image, reuse=False):
         return tf.nn.sigmoid(r_out), r_out, c_softmax, c_out
 
 def wgan_slim_cond(model, image, y, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         yb = tf.reshape(y, [-1, 1, 1, model.y_dim])
@@ -113,7 +113,7 @@ def wgan_slim_cond(model, image, y, reuse=False):
         return r_out
 
 def wgan_slim(model, image, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         h0 = lrelu(layer_norm(conv2d(image, model.df_dim, k_h=4, k_w=4, name='d_h0_conv',padding='VALID')))
@@ -126,7 +126,7 @@ def wgan_slim(model, image, reuse=False):
         out = linear(h2, 1, 'd_ro_lin')
         return out
 def dcwgan(model, image, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         h0 = lrelu(conv2d(image, model.df_dim, name='d_h0_conv'))
@@ -139,7 +139,7 @@ def dcwgan(model, image, reuse=False):
         return h4
 
 def dcwgan_cond(model, image, y, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
+    with tf.compat.v1.variable_scope("discriminator") as scope:
         if reuse:
             scope.reuse_variables()
         yb = tf.reshape(y, [-1, 1, 1, model.y_dim])

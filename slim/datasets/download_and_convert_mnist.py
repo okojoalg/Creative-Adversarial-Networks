@@ -114,10 +114,10 @@ def _add_to_tfrecord(data_filename, labels_filename, num_images,
 
   shape = (_IMAGE_SIZE, _IMAGE_SIZE, _NUM_CHANNELS)
   with tf.Graph().as_default():
-    image = tf.placeholder(dtype=tf.uint8, shape=shape)
+    image = tf.compat.v1.placeholder(dtype=tf.uint8, shape=shape)
     encoded_png = tf.image.encode_png(image)
 
-    with tf.Session('') as sess:
+    with tf.compat.v1.Session('') as sess:
       for j in range(num_images):
         sys.stdout.write('\r>> Converting image %d/%d' % (j + 1, num_images))
         sys.stdout.flush()
@@ -164,7 +164,7 @@ def _download_dataset(dataset_dir):
                                                filepath,
                                                _progress)
       print()
-      with tf.gfile.GFile(filepath) as f:
+      with tf.io.gfile.GFile(filepath) as f:
         size = f.size()
       print('Successfully downloaded', filename, size, 'bytes.')
 
@@ -180,7 +180,7 @@ def _clean_up_temporary_files(dataset_dir):
                    _TEST_DATA_FILENAME,
                    _TEST_LABELS_FILENAME]:
     filepath = os.path.join(dataset_dir, filename)
-    tf.gfile.Remove(filepath)
+    tf.io.gfile.remove(filepath)
 
 
 def run(dataset_dir):
@@ -190,26 +190,26 @@ def run(dataset_dir):
     dataset_dir: The dataset directory where the dataset is stored.
   """
   print('running')
-  if not tf.gfile.Exists(dataset_dir):
-    tf.gfile.MakeDirs(dataset_dir)
+  if not tf.io.gfile.exists(dataset_dir):
+    tf.io.gfile.makedirs(dataset_dir)
 
   training_filename = _get_output_filename(dataset_dir, 'train')
   testing_filename = _get_output_filename(dataset_dir, 'test')
 
-  if tf.gfile.Exists(training_filename) and tf.gfile.Exists(testing_filename):
+  if tf.io.gfile.exists(training_filename) and tf.io.gfile.exists(testing_filename):
     print('Dataset files already exist. Exiting without re-creating them.')
     return
 
   _download_dataset(dataset_dir)
 
   # First, process the training data:
-  with tf.python_io.TFRecordWriter(training_filename) as tfrecord_writer:
+  with tf.io.TFRecordWriter(training_filename) as tfrecord_writer:
     data_filename = os.path.join(dataset_dir, _TRAIN_DATA_FILENAME)
     labels_filename = os.path.join(dataset_dir, _TRAIN_LABELS_FILENAME)
     _add_to_tfrecord(data_filename, labels_filename, 60000, tfrecord_writer)
 
   # Next, process the testing data:
-  with tf.python_io.TFRecordWriter(testing_filename) as tfrecord_writer:
+  with tf.io.TFRecordWriter(testing_filename) as tfrecord_writer:
     data_filename = os.path.join(dataset_dir, _TEST_DATA_FILENAME)
     labels_filename = os.path.join(dataset_dir, _TEST_LABELS_FILENAME)
     _add_to_tfrecord(data_filename, labels_filename, 10000, tfrecord_writer)
